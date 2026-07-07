@@ -1,0 +1,94 @@
+package com.portalcomunitario.mstenant.comunidad;
+
+import com.portalcomunitario.mstenant.tenant.TenantProvisioningService;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.text.Normalizer;
+import java.time.Year;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+
+/** Alta y administración de comunidades (tenants). */
+@Service
+public class ComunidadService {
+
+    private final ComunidadRepository repo;
+    private final TenantProvisioningService provisioning;
+
+    public ComunidadService(ComunidadRepository repo, TenantProvisioningService provisioning) {
+        this.repo = repo;
+        this.provisioning = provisioning;
+    }
+
+    public List<Comunidad> listar() {
+        return repo.findAllByOrderByCreatedAtDesc();
+    }
+
+    public Comunidad crear(String nombre, String comuna, String adminEmail) {
+        if (nombre == null || nombre.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre de la comunidad es obligatorio");
+        }
+        if (adminEmail == null || adminEmail.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo del administrador es obligatorio");
+        }
+        String slug = slugUnico(slugify(nombre));
+        String codigo = generarCodigo(nombre);
+
+        Comunidad c = new Comunidad();
+        c.setNombre(nombre.trim());
+        c.setComuna(comuna != null ? comuna.trim() : null);
+        c.setSlug(slug);
+        c.setCodigo(codigo);
+        c.setAdminEmail(adminEmail.trim().toLowerCase());
+        c.setEstado("ACTIVA");
+        c = repo.save(c);
+
+        // Crea el schema del tenant y registra su datasource. (El llenado de tablas
+        // de auth/community y el admin de la comunidad se orquestan en MT2.)
+        provisioning.provisionTenant(slug);
+        return c;
+    }
+
+    public Comunidad cambiarEstado(UUID id, String estado) {
+        Comunidad c = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidad no encontrada"));
+        String e = estado != null ? estado.trim().toUpperCase() : "";
+        if (!e.equals("ACTIVA") && !e.equals("SUSPENDIDA")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado inválido (ACTIVA o SUSPENDIDA)");
+        }
+        c.setEstado(e);
+        return repo.save(c);
+    }
+
+    // ── Helpers ─────────────────────────────────────────────
+    private String slugify(String s) {
+        String n = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+        n = n.toLowerCase().trim().replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "");
+        if (n.isBlank()) n = "comunidad";
+        if (!Character.isLetter(n.charAt(0))) n = "c_" + n;
+        if (n.length() > 60) n = n.substring(0, 60);
+        return n;
+    }
+
+    private String slugUnico(String base) {
+        String slug = base;
+        int i = 2;
+        while (repo.existsBySlug(slug)) {
+            slug = base + "_" + i++;
+        }
+        return slug;
+    }
+
+    private String generarCodigo(String nombre) {
+        StringBuilder iniciales = new StringBuilder();
+        for (String w : nombre.trim().split("\\s+")) {
+            if (!w.isBlank() && iniciales.length() < 4) iniciales.append(Character.toUpperCase(w.charAt(0)));
+        }
+        String pref = iniciales.length() > 0 ? iniciales.toString() : "COM";
+        int rnd = ThreadLocalRandom.current().nextInt(1000, 10000);
+        return pref + "-" + Year.now().getValue() + "-" + rnd;
+    }
+}
