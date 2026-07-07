@@ -17,10 +17,13 @@ public class ComunidadService {
 
     private final ComunidadRepository repo;
     private final TenantProvisioningService provisioning;
+    private final ProvisioningClient provisioningClient;
 
-    public ComunidadService(ComunidadRepository repo, TenantProvisioningService provisioning) {
+    public ComunidadService(ComunidadRepository repo, TenantProvisioningService provisioning,
+                            ProvisioningClient provisioningClient) {
         this.repo = repo;
         this.provisioning = provisioning;
+        this.provisioningClient = provisioningClient;
     }
 
     public List<Comunidad> listar() {
@@ -46,9 +49,9 @@ public class ComunidadService {
         c.setEstado("ACTIVA");
         c = repo.save(c);
 
-        // Crea el schema del tenant y registra su datasource. (El llenado de tablas
-        // de auth/community y el admin de la comunidad se orquestan en MT2.)
+        // 1) Crea el schema. 2) Llena tablas de community + auth y crea el admin (en vivo).
         provisioning.provisionTenant(slug);
+        provisioningClient.provisionarTodo(slug, c.getAdminEmail(), c.getCodigo());
         return c;
     }
 
