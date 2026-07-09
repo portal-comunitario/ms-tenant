@@ -24,7 +24,8 @@ public class ComunidadController {
     @PostMapping
     public ComunidadDto crear(@RequestBody CrearRequest req, Authentication auth) {
         requirePlatformAdmin(auth);
-        return dto(service.crear(req.nombre(), req.comuna(), req.adminEmail()));
+        return dto(service.crear(req.nombre(), req.comuna(), req.adminEmail(),
+                req.sedeNombre(), req.sedeDireccion()));
     }
 
     @GetMapping
@@ -52,11 +53,14 @@ public class ComunidadController {
 
     private ComunidadDto dto(Comunidad c) {
         return new ComunidadDto(c.getId(), c.getNombre(), c.getComuna(), c.getSlug(), c.getCodigo(),
-                c.getAdminEmail(), c.getEstado(), "/c/" + c.getSlug());
+                c.getAdminEmail(), c.getEstado(), "/c/" + c.getSlug(),
+                c.getSedeNombre(), c.getSedeDireccion());
     }
 
-    public record CrearRequest(String nombre, String comuna, String adminEmail) {}
+    public record CrearRequest(String nombre, String comuna, String adminEmail,
+                               String sedeNombre, String sedeDireccion) {}
     public record EstadoRequest(String estado) {}
     public record ComunidadDto(UUID id, String nombre, String comuna, String slug, String codigo,
-                               String adminEmail, String estado, String url) {}
+                               String adminEmail, String estado, String url,
+                               String sedeNombre, String sedeDireccion) {}
 }

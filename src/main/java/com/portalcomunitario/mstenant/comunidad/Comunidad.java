@@ -35,6 +35,12 @@ public class Comunidad {
     @Column(name = "admin_email", nullable = false)
     private String adminEmail;
 
+    @Column(name = "sede_nombre", length = 160)
+    private String sedeNombre;
+
+    @Column(name = "sede_direccion", length = 255)
+    private String sedeDireccion;
+
     @Column(nullable = false, length = 20)
     private String estado;
 
@@ -58,6 +64,10 @@ public class Comunidad {
     public void setCodigo(String codigo) { this.codigo = codigo; }
     public String getAdminEmail() { return adminEmail; }
     public void setAdminEmail(String adminEmail) { this.adminEmail = adminEmail; }
+    public String getSedeNombre() { return sedeNombre; }
+    public void setSedeNombre(String sedeNombre) { this.sedeNombre = sedeNombre; }
+    public String getSedeDireccion() { return sedeDireccion; }
+    public void setSedeDireccion(String sedeDireccion) { this.sedeDireccion = sedeDireccion; }
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
     public LocalDateTime getCreatedAt() { return createdAt; }

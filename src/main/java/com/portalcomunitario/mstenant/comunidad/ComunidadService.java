@@ -30,12 +30,16 @@ public class ComunidadService {
         return repo.findAllByOrderByCreatedAtDesc();
     }
 
-    public Comunidad crear(String nombre, String comuna, String adminEmail) {
+    public Comunidad crear(String nombre, String comuna, String adminEmail,
+                           String sedeNombre, String sedeDireccion) {
         if (nombre == null || nombre.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre de la comunidad es obligatorio");
         }
         if (adminEmail == null || adminEmail.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo del administrador es obligatorio");
+        }
+        if (sedeDireccion == null || sedeDireccion.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La dirección de la sede es obligatoria");
         }
         String slug = slugUnico(slugify(nombre));
         String codigo = generarCodigo(nombre);
@@ -46,6 +50,9 @@ public class ComunidadService {
         c.setSlug(slug);
         c.setCodigo(codigo);
         c.setAdminEmail(adminEmail.trim().toLowerCase());
+        c.setSedeDireccion(sedeDireccion.trim());
+        c.setSedeNombre(sedeNombre != null && !sedeNombre.isBlank()
+                ? sedeNombre.trim() : "Sede " + nombre.trim());
         c.setEstado("ACTIVA");
         c = repo.save(c);
 
