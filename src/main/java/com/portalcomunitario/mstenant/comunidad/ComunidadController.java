@@ -34,6 +34,13 @@ public class ComunidadController {
         return service.listar().stream().map(this::dto).toList();
     }
 
+    @PutMapping("/{id}")
+    public ComunidadDto actualizar(@PathVariable UUID id, @RequestBody EditarRequest req, Authentication auth) {
+        requirePlatformAdmin(auth);
+        return dto(service.actualizar(id, req.nombre(), req.comuna(), req.adminEmail(),
+                req.sedeNombre(), req.sedeDireccion()));
+    }
+
     @PutMapping("/{id}/estado")
     public ComunidadDto cambiarEstado(@PathVariable UUID id, @RequestBody EstadoRequest req, Authentication auth) {
         requirePlatformAdmin(auth);
@@ -59,6 +66,8 @@ public class ComunidadController {
 
     public record CrearRequest(String nombre, String comuna, String adminEmail,
                                String sedeNombre, String sedeDireccion) {}
+    public record EditarRequest(String nombre, String comuna, String adminEmail,
+                                String sedeNombre, String sedeDireccion) {}
     public record EstadoRequest(String estado) {}
     public record ComunidadDto(UUID id, String nombre, String comuna, String slug, String codigo,
                                String adminEmail, String estado, String url,

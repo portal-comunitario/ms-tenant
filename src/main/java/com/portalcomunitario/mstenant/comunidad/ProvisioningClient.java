@@ -44,7 +44,8 @@ public class ProvisioningClient {
                 .toBodilessEntity();
     }
 
-    private void crearAdmin(String slug, String adminEmail, String adminPassword) {
+    /** Crea (idempotente) el admin de la comunidad en el schema del tenant. Reutilizable al editar. */
+    public void crearAdmin(String slug, String adminEmail, String adminPassword) {
         http.post()
                 .uri(authUrl + "/internal/tenants/" + slug + "/admin")
                 .header("X-Internal-Token", token)

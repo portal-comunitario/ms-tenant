@@ -62,6 +62,30 @@ public class ComunidadService {
         return c;
     }
 
+    /** Edita metadata de la comunidad. El slug/schema NO cambia (es la identidad del tenant). */
+    public Comunidad actualizar(UUID id, String nombre, String comuna, String adminEmail,
+                                String sedeNombre, String sedeDireccion) {
+        Comunidad c = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidad no encontrada"));
+        if (nombre != null && !nombre.isBlank()) c.setNombre(nombre.trim());
+        c.setComuna(comuna != null && !comuna.isBlank() ? comuna.trim() : null);
+        if (sedeDireccion != null && !sedeDireccion.isBlank()) c.setSedeDireccion(sedeDireccion.trim());
+        if (sedeNombre != null && !sedeNombre.isBlank()) c.setSedeNombre(sedeNombre.trim());
+
+        boolean adminCambio = adminEmail != null && !adminEmail.isBlank()
+                && !adminEmail.trim().equalsIgnoreCase(c.getAdminEmail());
+        if (adminCambio) {
+            c.setAdminEmail(adminEmail.trim().toLowerCase());
+        }
+        c = repo.save(c);
+
+        // Si cambió el correo del admin, crea (idempotente) ese acceso en el schema con el código como clave temporal.
+        if (adminCambio) {
+            provisioningClient.crearAdmin(c.getSlug(), c.getAdminEmail(), c.getCodigo());
+        }
+        return c;
+    }
+
     public Comunidad cambiarEstado(UUID id, String estado) {
         Comunidad c = repo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidad no encontrada"));
