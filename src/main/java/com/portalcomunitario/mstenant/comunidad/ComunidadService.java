@@ -99,7 +99,7 @@ public class ComunidadService {
 
     private String slugify(String s) {
         String n = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-        n = n.toLowerCase().trim().replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "");
+        n = n.toLowerCase().trim().replaceAll("[^a-z0-9]+", "_").replaceAll("^_+", "").replaceAll("_+$", "");
         if (n.isBlank()) n = "comunidad";
         if (!Character.isLetter(n.charAt(0))) n = "c_" + n;
         if (n.length() > 60) n = n.substring(0, 60);
