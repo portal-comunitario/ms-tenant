@@ -36,7 +36,6 @@ public class TenantProvisioningService {
         validate(tenantId);
         createSchema(tenantId);
         // NOTA: el llenado de tablas (auth + community) se delega a esos servicios en MT2.
-        // runMigrations(tenantId);  // <- ya no corre las migraciones propias de ms-tenant sobre el tenant
 
         DriverManagerDataSource tenantDataSource = dataSourceConfig.createDataSource(tenantId);
         routingDataSource.addDataSource(tenantId, tenantDataSource);

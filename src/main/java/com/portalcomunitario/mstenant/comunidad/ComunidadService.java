@@ -97,7 +97,6 @@ public class ComunidadService {
         return repo.save(c);
     }
 
-    // ── Helpers ─────────────────────────────────────────────
     private String slugify(String s) {
         String n = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
         n = n.toLowerCase().trim().replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "");
