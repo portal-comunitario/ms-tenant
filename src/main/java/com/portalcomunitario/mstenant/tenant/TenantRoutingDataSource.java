@@ -22,6 +22,14 @@ public class TenantRoutingDataSource extends AbstractRoutingDataSource {
         super.afterPropertiesSet();
     }
 
+    /** Quita el datasource de un tenant (al eliminar la comunidad). Idempotente. */
+    public synchronized void removeDataSource(String tenantId) {
+        if (targetDataSources.remove(tenantId) != null) {
+            super.setTargetDataSources(new HashMap<>(targetDataSources));
+            super.afterPropertiesSet();
+        }
+    }
+
     public boolean hasTenant(String tenantId) {
         return targetDataSources.containsKey(tenantId);
     }

@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -135,6 +136,28 @@ class ComunidadControllerTest {
                 id, new ComunidadController.EstadoRequest("SUSPENDIDA"), authConRol("PLATFORM_ADMIN"));
 
         assertThat(dto.estado()).isEqualTo("SUSPENDIDA");
+    }
+
+    // ---------- eliminar ----------
+
+    @Test
+    @DisplayName("eliminar: admin delega el borrado en el service")
+    void eliminar_admin_delega() {
+        UUID id = UUID.randomUUID();
+
+        controller.eliminar(id, authConRol("PLATFORM_ADMIN"));
+
+        verify(service).eliminar(id);
+    }
+
+    @Test
+    @DisplayName("eliminar: un rol distinto de PLATFORM_ADMIN recibe 403 y no toca el service")
+    void eliminar_rolNoAutorizado_lanza403() {
+        assertThatThrownBy(() -> controller.eliminar(UUID.randomUUID(), authConRol("VECINO")))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("administrador de plataforma");
+
+        verifyNoInteractions(service);
     }
 
     // ---------- guard sin token JWT ----------

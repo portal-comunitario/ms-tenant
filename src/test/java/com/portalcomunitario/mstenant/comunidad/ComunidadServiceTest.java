@@ -165,4 +165,45 @@ class ComunidadServiceTest {
         assertThatThrownBy(() -> service.actualizar(id, "N", null, null, null, "Dir"))
                 .isInstanceOf(ResponseStatusException.class);
     }
+
+    @Test
+    @DisplayName("eliminar: si está SUSPENDIDA, deprovisiona el tenant y borra el registro")
+    void eliminar_suspendida_deprovisionaYBorra() {
+        UUID id = UUID.randomUUID();
+        Comunidad c = new Comunidad();
+        c.setSlug("villa_el_sol");
+        c.setEstado("SUSPENDIDA");
+        when(repo.findById(id)).thenReturn(Optional.of(c));
+
+        service.eliminar(id);
+
+        verify(provisioning).deprovisionTenant("villa_el_sol");
+        verify(repo).delete(c);
+    }
+
+    @Test
+    @DisplayName("eliminar: si está ACTIVA lanza 409 y no toca schema ni registro")
+    void eliminar_activa_409() {
+        UUID id = UUID.randomUUID();
+        Comunidad c = new Comunidad();
+        c.setSlug("villa_el_sol");
+        c.setEstado("ACTIVA");
+        when(repo.findById(id)).thenReturn(Optional.of(c));
+
+        assertThatThrownBy(() -> service.eliminar(id))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("suspendida");
+        verify(provisioning, never()).deprovisionTenant(anyString());
+        verify(repo, never()).delete(any(Comunidad.class));
+    }
+
+    @Test
+    @DisplayName("eliminar: comunidad inexistente lanza 404")
+    void eliminar_inexistente_404() {
+        UUID id = UUID.randomUUID();
+        when(repo.findById(id)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.eliminar(id))
+                .isInstanceOf(ResponseStatusException.class);
+        verify(provisioning, never()).deprovisionTenant(anyString());
+    }
 }

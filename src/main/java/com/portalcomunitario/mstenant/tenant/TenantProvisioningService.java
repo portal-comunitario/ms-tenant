@@ -41,6 +41,26 @@ public class TenantProvisioningService {
         routingDataSource.addDataSource(tenantId, tenantDataSource);
     }
 
+    /**
+     * Elimina por completo un tenant: saca su datasource del router y hace
+     * DROP SCHEMA ... CASCADE (borra todas sus tablas y datos). Irreversible.
+     */
+    public void deprovisionTenant(String tenantId) {
+        validate(tenantId);
+        routingDataSource.removeDataSource(tenantId);
+        dropSchema(tenantId);
+    }
+
+    private void dropSchema(String tenantId) {
+        DriverManagerDataSource admin = dataSourceConfig.createDataSource("public");
+        try (Connection conn = admin.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP SCHEMA IF EXISTS " + tenantId + " CASCADE");
+        } catch (Exception e) {
+            throw new RuntimeException("No se pudo eliminar el schema '" + tenantId + "'", e);
+        }
+    }
+
     private void validate(String tenantId) {
         if (tenantId == null || tenantId.isBlank()) {
             throw new IllegalArgumentException("El tenantId no puede ser nulo ni vacío");

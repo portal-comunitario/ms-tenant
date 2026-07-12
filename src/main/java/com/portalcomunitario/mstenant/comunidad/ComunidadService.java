@@ -97,6 +97,22 @@ public class ComunidadService {
         return repo.save(c);
     }
 
+    /**
+     * Elimina una comunidad de forma definitiva (hard delete). Solo se permite si
+     * está SUSPENDIDA, como resguardo. Deprovisiona el tenant (DROP SCHEMA CASCADE)
+     * y borra el registro. Irreversible.
+     */
+    public void eliminar(UUID id) {
+        Comunidad c = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comunidad no encontrada"));
+        if (!"SUSPENDIDA".equals(c.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "La comunidad debe estar suspendida antes de eliminarla");
+        }
+        provisioning.deprovisionTenant(c.getSlug());
+        repo.delete(c);
+    }
+
     private String slugify(String s) {
         String n = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
         n = n.toLowerCase().trim().replaceAll("[^a-z0-9]+", "_").replaceAll("^_+", "").replaceAll("_+$", "");

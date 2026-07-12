@@ -47,6 +47,13 @@ public class ComunidadController {
         return dto(service.cambiarEstado(id, req.estado()));
     }
 
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminar(@PathVariable UUID id, Authentication auth) {
+        requirePlatformAdmin(auth);
+        service.eliminar(id);
+    }
+
     private void requirePlatformAdmin(Authentication auth) {
         String role = "";
         if (auth instanceof JwtAuthenticationToken jwtAuth) {
